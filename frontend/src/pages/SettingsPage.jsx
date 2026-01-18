@@ -3,8 +3,8 @@ import { useThemeStore } from "../store/useThemeStore";
 import { Send } from "lucide-react";
 
 const PREVIEW_MESSAGES = [
-  { id: 1, content: "Hey! How's it going?", isSent: false },
-  { id: 2, content: "I'm doing great! Just working on some new features.", isSent: true },
+  { id: 1, content: "Chào bạn!", isSent: false },
+  { id: 2, content: "Tôi đang làm việc trên một số tính năng mới.", isSent: true },
 ];
 
 const SettingsPage = () => {
@@ -14,8 +14,8 @@ const SettingsPage = () => {
     <div className="h-screen container mx-auto px-4 pt-20 max-w-5xl">
       <div className="space-y-6">
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold">Theme</h2>
-          <p className="text-sm text-base-content/70">Choose a theme for your chat interface</p>
+          <h2 className="text-lg font-semibold">Chủ đề</h2>
+          <p className="text-sm text-base-content/70">Chọn một chủ đề cho giao diện trò chuyện của bạn</p>
         </div>
 
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
@@ -57,7 +57,7 @@ const SettingsPage = () => {
                       J
                     </div>
                     <div>
-                      <h3 className="font-medium text-sm">John Doe</h3>
+                      <h3 className="font-medium text-sm">Người dùng</h3>
                       <p className="text-xs text-base-content/70">Online</p>
                     </div>
                   </div>
@@ -96,8 +96,8 @@ const SettingsPage = () => {
                     <input
                       type="text"
                       className="input input-bordered flex-1 text-sm h-10"
-                      placeholder="Type a message..."
-                      value="This is a preview"
+                      placeholder="Nhập tin nhắn..."
+                      value="Đây là bản xem trước chủ đề trò chuyện"
                       readOnly
                     />
                     <button className="btn btn-primary h-10 min-h-0">

@@ -10,51 +10,116 @@ export const useChatStore = create((set, get) => ({
   isUsersLoading: false,
   isMessagesLoading: false,
 
+  /* ===================== USERS ===================== */
   getUsers: async () => {
     set({ isUsersLoading: true });
     try {
       const res = await axiosInstance.get("/messages/users");
-      set({ users: res.data });
+
+      // đảm bảo user nào cũng có unreadCount + lastMessage
+      const usersWithDefaults = res.data.map((u) => ({
+        ...u,
+        unreadCount: u.unreadCount || 0,
+        lastMessage: u.lastMessage || null,
+      }));
+
+      set({ users: usersWithDefaults });
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Lỗi tải users");
     } finally {
       set({ isUsersLoading: false });
     }
   },
 
+  /* ===================== MESSAGES ===================== */
   getMessages: async (userId) => {
-    set({ isMessagesLoading: true });
-    try {
-      const res = await axiosInstance.get(`/messages/${userId}`);
-      set({ messages: res.data });
-    } catch (error) {
-      toast.error(error.response.data.message);
-    } finally {
-      set({ isMessagesLoading: false });
+  set({ isMessagesLoading: true });
+  try {
+    const res = await axiosInstance.get(`/messages/${userId}`);
+    const messages = res.data;
+
+    set({ messages });
+
+    // 🔥 FIX QUAN TRỌNG NHẤT
+    if (messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+
+      set((state) => ({
+        users: state.users.map((u) =>
+          u._id === userId
+            ? {
+                ...u,
+                lastMessage: lastMsg,
+              }
+            : u
+        ),
+      }));
     }
-  },
+
+    // reset unread
+    get().markAsRead(userId);
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Lỗi tải tin nhắn");
+  } finally {
+    set({ isMessagesLoading: false });
+  }
+},
+
+
   sendMessage: async (messageData) => {
-    const { selectedUser, messages } = get();
+    const { selectedUser, messages, users } = get();
+
     try {
-      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
+      const res = await axiosInstance.post(
+        `/messages/send/${selectedUser._id}`,
+        messageData
+      );
+
+      // thêm vào khung chat
       set({ messages: [...messages, res.data] });
+
+      // cập nhật lastMessage ở sidebar
+      set({
+        users: users.map((u) =>
+          u._id === selectedUser._id
+            ? {
+                ...u,
+                lastMessage: res.data,
+              }
+            : u
+        ),
+      });
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Gửi tin nhắn lỗi");
     }
   },
 
+  /* ===================== SOCKET ===================== */
   subscribeToMessages: () => {
-    const { selectedUser } = get();
-    if (!selectedUser) return;
-
     const socket = useAuthStore.getState().socket;
 
     socket.on("newMessage", (newMessage) => {
-      const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
-      if (!isMessageSentFromSelectedUser) return;
+      const { selectedUser, messages, users } = get();
 
+      const isChatOpen =
+        selectedUser && newMessage.senderId === selectedUser._id;
+
+      // đang mở đúng cuộc chat
+      if (isChatOpen) {
+        set({ messages: [...messages, newMessage] });
+      }
+
+      // cập nhật sidebar
       set({
-        messages: [...get().messages, newMessage],
+        users: users.map((u) => {
+          if (u._id !== newMessage.senderId) return u;
+
+          return {
+            ...u,
+            lastMessage: newMessage,
+            unreadCount: isChatOpen ? 0 : (u.unreadCount || 0) + 1,
+          };
+        }),
       });
     });
   },
@@ -62,6 +127,15 @@ export const useChatStore = create((set, get) => ({
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
+  },
+
+  /* ===================== READ ===================== */
+  markAsRead: (userId) => {
+    set((state) => ({
+      users: state.users.map((u) =>
+        u._id === userId ? { ...u, unreadCount: 0 } : u
+      ),
+    }));
   },
 
   setSelectedUser: (selectedUser) => set({ selectedUser }),

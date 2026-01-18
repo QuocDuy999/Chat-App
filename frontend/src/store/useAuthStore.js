@@ -33,7 +33,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/signup", data);
       set({ authUser: res.data });
-      toast.success("Account created successfully");
+      toast.success("Tài khoản đã được tạo thành công");
       get().connectSocket();
     } catch (error) {
       toast.error(error.response.data.message);
@@ -47,7 +47,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/login", data);
       set({ authUser: res.data });
-      toast.success("Logged in successfully");
+      toast.success("Đăng nhập thành công");
 
       get().connectSocket();
     } catch (error) {
@@ -61,7 +61,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       await axiosInstance.post("/auth/logout");
       set({ authUser: null });
-      toast.success("Logged out successfully");
+      toast.success("Đăng xuất thành công");
       get().disconnectSocket();
     } catch (error) {
       toast.error(error.response.data.message);
@@ -73,9 +73,9 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.put("/auth/update-profile", data);
       set({ authUser: res.data });
-      toast.success("Profile updated successfully");
+      toast.success("Cập nhật hồ sơ thành công");
     } catch (error) {
-      console.log("error in update profile:", error);
+      console.log("Cập nhật hồ sơ thất bại:", error);
       toast.error(error.response.data.message);
     } finally {
       set({ isUpdatingProfile: false });
